@@ -1,0 +1,35 @@
+# Local configuration may contain SSH credentials and personal project paths.
+config.json
+config.json.*
+!config.example.json
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Runtime data
+logs/
+*.log
+*.pid
+
+# Build and packaged output
+build/
+dist/
+*.tar.gz
+
+# Local test/debug artifacts
+.workbuddy/
+_setup_test.py
+call
+*.png
+*.canvas.status.json
+*.canvas.tsx
+UI设计图.html
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

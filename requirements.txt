@@ -1,0 +1,7 @@
+# YudaoLauncher 运行依赖
+Flask>=2.3
+paramiko>=3.0
+pycryptodome>=3.15
+bcrypt>=4.0
+pynacl>=1.5
+cryptography>=41.0

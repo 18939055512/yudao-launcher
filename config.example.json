@@ -1,0 +1,22 @@
+{
+  "projects": [
+    {
+      "id": "example-backend",
+      "name": "示例后端",
+      "path": "/srv/projects/example-backend",
+      "preCommand": "",
+      "command": "mvn spring-boot:run",
+      "compileCommand": "mvn clean install -DskipTests",
+      "port": 8080,
+      "enabled": true,
+      "startOrder": 1
+    }
+  ],
+  "server": {
+    "host": "127.0.0.1",
+    "port": 5150
+  },
+  "remoteServers": [],
+  "remoteProjects": [],
+  "frameworks": []
+}

@@ -1,0 +1,2133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>项目启动器</title>
+    <style>
+        :root {
+            --bg: #f5f6fa;
+            --card-bg: #ffffff;
+            --primary: #4f6ef7;
+            --primary-hover: #3b5de7;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-lg: 0 4px 16px rgba(0,0,0,0.1);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-left { display: flex; align-items: center; gap: 10px; }
+        .logo {
+            width: 34px; height: 34px;
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+        .title { font-size: 17px; font-weight: 700; }
+        .subtitle { font-size: 11px; color: var(--text-secondary); }
+        .header-badge {
+            font-size: 11px; padding: 3px 8px; border-radius: 10px;
+            background: #ede9fe; color: #7c3aed; font-weight: 500;
+        }
+        .btn-icon {
+            width: 34px; height: 34px; border-radius: var(--radius-sm);
+            border: 1px solid var(--border); background: var(--card-bg);
+            cursor: pointer; font-size: 16px; color: var(--text-secondary);
+            display: flex; align-items: center; justify-content: center;
+            transition: var(--transition);
+        }
+        .btn-icon:hover { background: var(--bg); color: var(--text); }
+
+        /* Container */
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px 16px; }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center; padding: 60px 20px; color: var(--text-secondary);
+        }
+        .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+        .empty-state h3 { font-size: 16px; margin-bottom: 6px; color: var(--text); }
+        .empty-state p { font-size: 13px; margin-bottom: 16px; }
+        .empty-state .btn { font-size: 13px; }
+
+        /* Project Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+        @media (max-width: 720px) {
+            .cards-grid { grid-template-columns: 1fr; }
+        }
+
+        .status-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .status-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            border-radius: var(--radius) var(--radius) 0 0;
+            transition: var(--transition);
+        }
+        .status-card[data-status="running"]::before { background: var(--success); }
+        .status-card[data-status="starting"]::before { background: var(--warning); }
+        .status-card[data-status="error"]::before { background: var(--danger); }
+        .status-card[data-status="stopped"]::before { background: #94a3b8; }
+
+        .card-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .card-title {
+            font-size: 14px; font-weight: 600;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .card-icon {
+            width: 28px; height: 28px; border-radius: 7px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+        }
+        .card-icon.java { background: #fef2f2; }
+        .card-icon.node { background: #ecfdf5; }
+        .card-icon.other { background: #f0f9ff; }
+
+        .status-badge {
+            font-size: 11px; font-weight: 600; padding: 3px 9px;
+            border-radius: 20px; letter-spacing: 0.3px;
+        }
+        .status-badge.running { background: #dcfce7; color: #16a34a; }
+        .status-badge.starting { background: #fef3c7; color: #d97706; }
+        .status-badge.stopped { background: #f1f5f9; color: #64748b; }
+        .status-badge.error { background: #fee2e2; color: #dc2626; }
+
+        .card-info {
+            font-size: 12px; color: var(--text-secondary);
+            margin-bottom: 12px; display: flex; gap: 14px; flex-wrap: wrap;
+        }
+        .card-info .tag {
+            display: inline-flex; align-items: center; gap: 3px;
+            font-size: 11px; padding: 2px 7px;
+            background: #f8fafc; border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        .card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+        /* Buttons */
+        .btn {
+            padding: 7px 14px; border-radius: var(--radius-sm);
+            border: none; font-size: 12px; font-weight: 500;
+            cursor: pointer; transition: var(--transition);
+            display: inline-flex; align-items: center; gap: 5px;
+            white-space: nowrap;
+        }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+        .btn-success { background: var(--success); color: #fff; }
+        .btn-success:hover:not(:disabled) { background: #16a34a; }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-danger:hover:not(:disabled) { background: #dc2626; }
+        .btn-outline {
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text);
+        }
+        .btn-outline:hover:not(:disabled) { background: var(--bg); }
+        .btn-lg { padding: 9px 22px; font-size: 13px; font-weight: 600; }
+        .btn-sm { padding: 4px 10px; font-size: 11px; }
+        .btn-link {
+            background: transparent; border: 1px solid var(--border);
+            color: var(--primary); cursor: pointer;
+        }
+        .btn-link:hover:not(:disabled) { background: #f0f3ff; border-color: var(--primary); }
+        .btn-link.disabled { color: #94a3b8; border-color: #e2e8f0; cursor: not-allowed; }
+
+        /* Global Actions */
+        .global-actions {
+            display: flex; gap: 10px; justify-content: center;
+            margin-bottom: 18px;
+        }
+
+        /* Log Panel */
+        .log-panel {
+            background: var(--card-bg); border-radius: var(--radius);
+            box-shadow: var(--shadow); border: 1px solid var(--border);
+            overflow: hidden; margin-top: 6px;
+        }
+        .log-tabs {
+            display: flex; border-bottom: 1px solid var(--border);
+            background: #f8fafc; overflow-x: auto;
+        }
+        .log-tab {
+            padding: 9px 16px; font-size: 12px; font-weight: 500;
+            cursor: pointer; border: none; background: none;
+            color: var(--text-secondary); transition: var(--transition);
+            border-bottom: 2px solid transparent; white-space: nowrap;
+        }
+        .log-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .log-tab:hover { color: var(--text); }
+        .log-content {
+            height: 450px; overflow-y: auto; padding: 14px;
+            font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+            font-size: 11px; line-height: 1.7;
+            background: #1e1e2e; color: #cdd6f4;
+            white-space: pre-wrap; word-break: break-all;
+        }
+        .log-content.empty {
+            color: #6c7086; display: flex; align-items: center;
+            justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 13px;
+        }
+        .log-toolbar {
+            display: flex; justify-content: flex-end; padding: 7px 10px;
+            gap: 6px; border-top: 1px solid var(--border);
+            background: #f8fafc;
+        }
+
+        /* Settings Overlay */
+        .settings-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4); z-index: 200;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.25s;
+        }
+        .settings-overlay.open { opacity: 1; pointer-events: all; }
+
+        .settings-panel {
+            background: var(--card-bg); border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            width: 640px; max-width: 95vw; max-height: 85vh;
+            overflow-y: auto; padding: 24px 28px;
+        }
+        .settings-title {
+            font-size: 17px; font-weight: 700; margin-bottom: 20px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .settings-section { margin-bottom: 16px; }
+        .settings-section h3 {
+            font-size: 12px; font-weight: 600; color: var(--text-secondary);
+            text-transform: uppercase; letter-spacing: 0.5px;
+            margin-bottom: 10px; padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* 通用对话框（提交信息录入等） */
+        .dialog-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4); z-index: 300;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s;
+        }
+        .dialog-overlay.open { opacity: 1; pointer-events: all; }
+        .dialog {
+            background: var(--card-bg); border-radius: var(--radius);
+            box-shadow: var(--shadow-lg); width: 440px; max-width: 92vw;
+            padding: 22px 24px;
+        }
+        .dialog h3 { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+        .dialog textarea {
+            width: 100%; min-height: 96px; resize: vertical;
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            padding: 10px 12px; font-size: 13px; font-family: inherit;
+            color: var(--text); background: var(--bg); outline: none; line-height: 1.5;
+        }
+        .dialog textarea:focus { border-color: var(--primary); }
+        .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+
+        /* Project list in settings */
+        .project-list-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border: 1px solid var(--border);
+            border-radius: var(--radius-sm); margin-bottom: 8px;
+            transition: var(--transition); flex-wrap: wrap;
+        }
+        .project-list-item:hover { border-color: var(--primary); }
+        .project-list-item.disabled { opacity: 0.55; }
+        .project-list-info { flex: 1; min-width: 120px; }
+        .project-list-name { font-size: 13px; font-weight: 600; }
+        .project-list-meta { font-size: 11px; color: var(--text-secondary); }
+        .project-list-actions { display: flex; gap: 4px; flex-shrink: 0; }
+        .project-list-order {
+            font-size: 11px; color: var(--text-secondary);
+            background: #f1f5f9; padding: 2px 8px; border-radius: 10px;
+            white-space: nowrap;
+        }
+
+        /* Form inside settings */
+        .form-section {
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            padding: 16px; margin-bottom: 14px;
+            background: #fafbfc;
+        }
+        .form-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 120px; }
+        .form-group.small { flex: 0 0 100px; min-width: 80px; }
+        .form-label {
+            display: block; font-size: 12px; font-weight: 500;
+            margin-bottom: 4px; color: var(--text);
+        }
+        .form-input {
+            width: 100%; padding: 7px 10px;
+            border: 1px solid var(--border); border-radius: 6px;
+            font-size: 12px; background: var(--card-bg); color: var(--text);
+            transition: var(--transition);
+        }
+        .form-input:focus {
+            outline: none; border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79,110,247,0.08);
+        }
+        .form-hint { font-size: 10px; color: var(--text-secondary); margin-top: 3px; }
+        .form-check {
+            display: flex; align-items: center; gap: 6px; font-size: 12px;
+        }
+        .form-check input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--primary); }
+        .settings-actions {
+            display: flex; gap: 8px; justify-content: space-between;
+            margin-top: 4px; padding-top: 14px; border-top: 1px solid var(--border);
+        }
+
+        /* Spinner */
+        .loading-spinner {
+            display: inline-block; width: 13px; height: 13px;
+            border: 2px solid currentColor; border-right-color: transparent;
+            border-radius: 50%; animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b; color: #fff;
+            padding: 9px 18px; border-radius: 8px;
+            font-size: 12px; z-index: 300;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+        .toast.show { opacity: 1; pointer-events: all; }
+        .toast.error { background: var(--danger); }
+        .toast.success { background: #16a34a; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .starting-pulse { animation: pulse 1.5s ease-in-out infinite; }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex; gap: 0; background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0 28px;
+            box-shadow: var(--shadow);
+        }
+        .tab-btn {
+            padding: 12px 24px; font-size: 13px; font-weight: 600;
+            cursor: pointer; border: none; background: none;
+            color: var(--text-secondary); transition: var(--transition);
+            border-bottom: 2px solid transparent;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .tab-badge {
+            font-size: 10px; padding: 1px 6px; border-radius: 8px;
+            background: #f1f5f9; color: var(--text-secondary); font-weight: 500;
+        }
+        .tab-btn.active .tab-badge { background: #ede9fe; color: #7c3aed; }
+
+        /* Remote server tag on cards */
+        .server-tag {
+            display: inline-flex; align-items: center; gap: 3px;
+            font-size: 11px; padding: 2px 7px;
+            background: #fef3c7; border: 1px solid #fde68a;
+            border-radius: 4px; color: #92400e;
+        }
+
+        /* Framework badge on cards */
+        .fw-badge {
+            font-size: 10px; padding: 2px 8px; border-radius: 10px;
+            font-weight: 600; white-space: nowrap; margin-left: auto;
+        }
+        .fw-yudao { background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; }
+        .fw-bootdo { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        .fw-ruoyi { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+        .fw-none { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+
+        /* Framework management list */
+        .fw-cmd-line {
+            font-size: 11px; color: var(--text-secondary); font-family: "Consolas", monospace;
+            background: #f8fafc; border: 1px solid var(--border); border-radius: 4px;
+            padding: 3px 6px; margin: 3px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .fw-cmd-line .lbl { color: var(--text); font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+    <div class="header-left">
+        <div class="logo">🚀</div>
+        <div>
+            <div class="title">项目启动器</div>
+            <div class="subtitle">Multi-Project Launcher</div>
+        </div>
+        <span class="header-badge" id="project-count">0 个项目</span>
+    </div>
+    <div class="header-right">
+        <button class="btn-icon" onclick="openSettings()" title="项目管理">⚙️</button>
+    </div>
+</header>
+
+<!-- Tab Navigation -->
+<nav class="tab-nav">
+    <button class="tab-btn active" data-tab="local" onclick="switchTab('local')">
+        💻 本地项目 <span class="tab-badge" id="local-count">0</span>
+    </button>
+    <button class="tab-btn" data-tab="remote" onclick="switchTab('remote')">
+        🌐 远程项目 <span class="tab-badge" id="remote-count">0</span>
+    </button>
+</nav>
+
+<!-- Main -->
+<div class="container">
+
+    <!-- Local Projects Section -->
+    <div id="local-section">
+        <!-- Empty State -->
+        <div class="empty-state" id="empty-state">
+            <div class="icon">📦</div>
+            <h3>还没有配置本地项目</h3>
+            <p>点击右上角设置按钮或下方按钮，添加你的第一个本地项目</p>
+            <button class="btn btn-primary" onclick="openSettings()">+ 添加项目</button>
+        </div>
+
+        <!-- Project Cards -->
+        <div class="cards-grid" id="cards-grid" style="display:none;"></div>
+
+        <!-- Global Actions -->
+        <div class="global-actions" id="global-actions" style="display:none;">
+            <button class="btn btn-success btn-lg" id="btn-start-all" onclick="startAll()">
+                🚀 一键启动
+            </button>
+            <button class="btn btn-danger btn-lg" id="btn-stop-all" onclick="stopAll()" disabled>
+                ⏹ 一键停止
+            </button>
+        </div>
+    </div>
+
+    <!-- Remote Projects Section -->
+    <div id="remote-section" style="display:none;">
+        <div class="empty-state" id="remote-empty-state">
+            <div class="icon">🌐</div>
+            <h3>还没有配置远程项目</h3>
+            <p>先在设置中添加远程服务器，然后添加远程项目</p>
+            <button class="btn btn-primary" onclick="openSettings()">+ 配置服务器</button>
+        </div>
+
+        <div class="cards-grid" id="remote-cards-grid" style="display:none;"></div>
+
+        <div class="global-actions" id="remote-global-actions" style="display:none;">
+            <button class="btn btn-success btn-lg" id="btn-remote-start-all" onclick="remoteStartAll()">
+                🚀 一键启动
+            </button>
+            <button class="btn btn-danger btn-lg" id="btn-remote-stop-all" onclick="remoteStopAll()" disabled>
+                ⏹ 一键停止
+            </button>
+        </div>
+    </div>
+
+    <!-- Log Panel -->
+    <div class="log-panel" id="log-panel">
+        <div class="log-tabs" id="log-tabs">
+            <span class="log-tab" style="padding:9px 16px; color:#94a3b8;">选择项目查看日志</span>
+        </div>
+        <div class="log-content empty" id="log-content">启动项目后在此查看运行日志</div>
+        <div class="log-toolbar">
+            <button class="btn btn-outline btn-sm" onclick="refreshLog()">🔄 刷新</button>
+            <button class="btn btn-outline btn-sm" onclick="clearLogDisplay()">🗑 清屏</button>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Overlay -->
+<div class="settings-overlay" id="settings-overlay">
+    <div class="settings-panel">
+        <div class="settings-title">
+            项目管理
+            <button class="btn-icon" onclick="closeSettings()">✕</button>
+        </div>
+
+        <!-- Project List -->
+        <div class="settings-section">
+            <h3>📋 项目列表</h3>
+            <div id="settings-project-list"></div>
+                        <button class="btn btn-primary btn-sm" onclick="showAddForm()" style="margin-top:8px;">
+                + 添加项目
+            </button>
+        </div>
+
+        <!-- Framework Management -->
+        <div class="settings-section" style="margin-top:16px;">
+            <h3>🧩 框架管理</h3>
+            <div id="settings-framework-list"></div>
+            <button class="btn btn-primary btn-sm" onclick="showAddFrameworkForm()" style="margin-top:8px;">
+                + 添加框架
+            </button>
+        </div>
+
+        <!-- Framework Form -->
+        <div id="settings-framework-form" style="display:none;">
+            <div class="settings-section">
+                <h3 id="settings-framework-form-title">新增框架</h3>
+                <div class="form-section">
+                    <input type="hidden" id="fw-edit-id" value="">
+                    <div class="form-row">
+                        <div class="form-group small">
+                            <label class="form-label">框架名称</label>
+                            <input type="text" class="form-input" id="fw-name" placeholder="例如: yudao">
+                            <div class="form-hint">唯一标识</div>
+                        </div>
+                        <div class="form-group small">
+                            <label class="form-label">图标(emoji)</label>
+                            <input type="text" class="form-input" id="fw-icon" placeholder="🍃">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">显示名（可选）</label>
+                            <input type="text" class="form-input" id="fw-display-name" placeholder="例如: 芋道 Yudao">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">▶ 启动命令（默认）</label>
+                            <input type="text" class="form-input" id="fw-start" placeholder="mvn exec:java ...">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">🔨 编译命令（默认）</label>
+                            <input type="text" class="form-input" id="fw-compile" placeholder="mvn clean install -DskipTests">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">📦 打包命令（默认）</label>
+                            <input type="text" class="form-input" id="fw-package" placeholder="mvn clean package -DskipTests">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">📦 打包产物路径（默认）</label>
+                            <input type="text" class="form-input" id="fw-artifact" placeholder="例如: target/*.jar">
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-actions">
+                    <button class="btn btn-outline btn-sm" onclick="cancelFrameworkForm()">取消</button>
+                    <button class="btn btn-primary btn-sm" onclick="saveFrameworkForm()">💾 保存</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add/Edit Form -->
+        <div id="settings-form" style="display:none;">
+            <div class="settings-section">
+                <h3 id="settings-form-title">新增项目</h3>
+                <div class="form-section">
+                    <input type="hidden" id="form-edit-id" value="">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">项目名称</label>
+                            <input type="text" class="form-input" id="form-name" placeholder="例如: 茅道后端">
+                            <div class="form-hint">显示名称</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">项目 ID</label>
+                            <input type="text" class="form-input" id="form-id" placeholder="例如: yudao-backend">
+                            <div class="form-hint">唯一标识，留空自动生成</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">项目路径</label>
+                            <div style="display:flex; gap:8px;">
+                                <input type="text" class="form-input" id="form-path" placeholder="例如: D:\projects\yudao-server" style="flex:1;">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="browseFolder('form-path')" title="选择文件夹">📁 选择</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">框架</label>
+                            <select class="form-input" id="settings-framework">
+                                <option value="">不指定（手动填命令）</option>
+                            </select>
+                            <div class="form-hint">选择框架后套用其默认编译/启动/打包命令</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Node 版本（可选）</label>
+                            <select class="form-input" id="form-node-version">
+                                <option value="">不使用指定版本</option>
+                            </select>
+                            <div class="form-hint">为此项目指定 Node 版本，解决多版本冲突</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">前置命令（可选）</label>
+                            <input type="text" class="form-input" id="form-pre-command" placeholder="例如: yarn install">
+                            <div class="form-hint">在主命令之前执行，比如安装依赖、激活虚拟环境等</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">启动命令</label>
+                            <input type="text" class="form-input" id="form-command" placeholder="例如: npm run local">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">编译命令</label>
+                            <input type="text" class="form-input" id="form-compile-command" placeholder="例如: mvn clean install -DskipTests">
+                            <div class="form-hint">点击编译按钮时执行的命令</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">打包命令（可选）</label>
+                            <input type="text" class="form-input" id="form-package-command" placeholder="例如: mvn clean package -DskipTests">
+                            <div class="form-hint">留空则使用所选框架的默认打包命令；打包时先构建再复制产物</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">打包产物路径（可选）</label>
+                            <div style="display:flex; gap:8px;">
+                                <input type="text" class="form-input" id="form-artifact-path" placeholder="例如: target/app.jar 或 dist（留空自动识别）" style="flex:1;">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="browseFolder('form-artifact-path')" title="选择文件或文件夹">📁 选择</button>
+                            </div>
+                            <div class="form-hint">打包时复制该文件/目录作为产物；留空则自动识别 jar/war 或 dist 目录</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">打包输出目录（可选）</label>
+                            <div style="display:flex; gap:8px;">
+                                <input type="text" class="form-input" id="form-package-target" placeholder="例如: D:\packages（留空使用全局配置）" style="flex:1;">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="browseFolder('form-package-target')" title="选择文件夹">📁 选择</button>
+                            </div>
+                            <div class="form-hint">点「打包」后，产物复制到该目录下的「项目名」子文件夹；留空则使用全局 package_target_dir</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group small">
+                            <label class="form-label">端口</label>
+                            <input type="number" class="form-input" id="form-port" placeholder="48080">
+                            <div class="form-hint">就绪检测</div>
+                        </div>
+                        <div class="form-group small">
+                            <label class="form-label">启动顺序</label>
+                            <input type="number" class="form-input" id="form-order" placeholder="1">
+                            <div class="form-hint">数字越小越先启动</div>
+                        </div>
+                        <div class="form-group" style="flex:0 0 auto;">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="form-check" style="padding-top:7px;">
+                                <input type="checkbox" id="form-enabled" checked>
+                                <span>启用</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-actions">
+                    <button class="btn btn-outline btn-sm" onclick="cancelForm()">取消</button>
+                    <button class="btn btn-primary btn-sm" onclick="saveForm()">💾 保存</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Remote Server Management -->
+        <div class="settings-section" style="margin-top:16px;">
+            <h3>🌐 远程服务器</h3>
+            <div id="settings-server-list"></div>
+            <button class="btn btn-primary btn-sm" onclick="showAddServerForm()" style="margin-top:8px;">
+                + 添加服务器
+            </button>
+        </div>
+        
+        <!-- Remote Server Form -->
+        <div id="settings-server-form" style="display:none;">
+            <div class="settings-section">
+                <h3 id="settings-server-form-title">新增服务器</h3>
+                <div class="form-section">
+                    <input type="hidden" id="server-form-edit-id" value="">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">服务器名称</label>
+                            <input type="text" class="form-input" id="server-form-name" placeholder="例如: 开发服务器">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">主机地址</label>
+                            <input type="text" class="form-input" id="server-form-host" placeholder="例如: 192.0.2.10">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group small">
+                            <label class="form-label">SSH 端口</label>
+                            <input type="number" class="form-input" id="server-form-port" placeholder="22" value="22">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">用户名</label>
+                            <input type="text" class="form-input" id="server-form-username" placeholder="root" value="root">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">密码</label>
+                            <input type="password" class="form-input" id="server-form-password" placeholder="SSH 密码">
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-actions">
+                    <button class="btn btn-outline btn-sm" onclick="cancelServerForm()">取消</button>
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn btn-outline btn-sm" id="server-test-btn" onclick="testServerConnection()" style="display:none;">🔌 测试连接</button>
+                        <button class="btn btn-primary btn-sm" onclick="saveServerForm()">💾 保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Remote Project Form -->
+        <div id="settings-remote-form" style="display:none;">
+            <div class="settings-section">
+                <h3 id="settings-remote-form-title">新增远程项目</h3>
+                <div class="form-section">
+                    <input type="hidden" id="rform-edit-id" value="">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">项目名称</label>
+                            <input type="text" class="form-input" id="rform-name" placeholder="例如: 远程后端">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">项目 ID</label>
+                            <input type="text" class="form-input" id="rform-id" placeholder="留空自动生成">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">所属服务器</label>
+                            <select class="form-input" id="rform-server"></select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">框架</label>
+                            <select class="form-input" id="rform-framework">
+                                <option value="">不指定（手动填命令）</option>
+                            </select>
+                            <div class="form-hint">远程环境自动将路径中的反斜杠转为 Linux 正斜杠</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">项目路径 (Linux)</label>
+                            <input type="text" class="form-input" id="rform-path" placeholder="例如: /opt/projects/yudao-server">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">启动命令</label>
+                            <input type="text" class="form-input" id="rform-command" placeholder="例如: mvn spring-boot:run">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">编译命令</label>
+                            <input type="text" class="form-input" id="rform-compile-command" placeholder="例如: mvn clean install -DskipTests">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">打包命令（可选）</label>
+                            <input type="text" class="form-input" id="rform-package-command" placeholder="例如: mvn clean package -DskipTests">
+                            <div class="form-hint">留空则使用框架默认打包命令</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">打包产物路径（可选）</label>
+                            <input type="text" class="form-input" id="rform-artifact-path" placeholder="例如: target/*.jar">
+                            <div class="form-hint">远程打包后按此路径下载产物</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">打包输出目录（可选）</label>
+                            <input type="text" class="form-input" id="rform-package-target" placeholder="例如: D:\packages（留空使用全局配置）">
+                            <div class="form-hint">仅远程项目本地产物存放目录</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group small">
+                            <label class="form-label">端口</label>
+                            <input type="number" class="form-input" id="rform-port" placeholder="48080">
+                            <div class="form-hint">状态检测</div>
+                        </div>
+                        <div class="form-group small">
+                            <label class="form-label">启动顺序</label>
+                            <input type="number" class="form-input" id="rform-order" placeholder="1">
+                        </div>
+                        <div class="form-group" style="flex:0 0 auto;">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="form-check" style="padding-top:7px;">
+                                <input type="checkbox" id="rform-enabled" checked>
+                                <span>启用</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-actions">
+                    <button class="btn btn-outline btn-sm" onclick="cancelRemoteForm()">取消</button>
+                    <button class="btn btn-primary btn-sm" onclick="saveRemoteForm()">💾 保存</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Remote Project List -->
+        <div class="settings-section" style="margin-top:16px;">
+            <h3>📋 远程项目列表</h3>
+            <div id="settings-remote-project-list"></div>
+            <button class="btn btn-primary btn-sm" onclick="showAddRemoteForm()" style="margin-top:8px;">
+                + 添加远程项目
+            </button>
+        </div>
+
+        <div class="settings-actions" style="margin-top:0; padding-top:12px;">
+            <span style="font-size:11px;color:var(--text-secondary);">点击项目旁的 ✏️ 编辑，🗑 删除</span>
+            <button class="btn btn-outline" onclick="closeSettings()">关闭</button>
+        </div>
+    </div>
+</div>
+
+<!-- 提交信息录入对话框 -->
+<div class="dialog-overlay" id="commit-dialog">
+    <div class="dialog">
+        <h3>📝 录入提交信息</h3>
+        <textarea id="commit-message" placeholder="请输入本次提交说明（留空将使用默认时间戳）"></textarea>
+        <div class="dialog-actions">
+            <button class="btn btn-outline btn-sm" onclick="closeCommitDialog()">取消</button>
+            <button class="btn btn-primary btn-sm" onclick="confirmCommit()">提交</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// State
+// ============================================================
+const STATE = {
+    projects: [],
+    status: {},
+    currentLog: null,
+    currentLogType: 'local', // 'local' or 'remote'
+    pollingTimer: null,
+    activeTab: 'local', // 'local' or 'remote'
+    remoteServers: [],
+    remoteProjects: [],
+    remoteStatus: {},
+    frameworks: [],
+};
+
+// ============================================================
+// Init
+// ============================================================
+async function init() {
+    await Promise.all([loadData(), loadNodeVersions(), loadRemoteData(), loadFrameworks()]);
+    startPolling();
+}
+
+// ============================================================
+// API
+// ============================================================
+async function api(url, options = {}) {
+    try {
+        const res = await fetch(url, {
+            headers: { 'Content-Type': 'application/json' },
+            ...options,
+        });
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.message || `HTTP ${res.status}`);
+        }
+        return await res.json();
+    } catch (err) {
+        showToast(err.message || '请求失败', 'error');
+        throw err;
+    }
+}
+
+async function browseFolder(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const initial = input.value.trim();
+    const btn = input.parentElement.querySelector('button');
+    const oldText = btn ? btn.textContent : '';
+    if (btn) btn.disabled = true;
+    try {
+        const res = await api('/api/browse-folder', {
+            method: 'POST',
+            body: JSON.stringify({ initial }),
+        });
+        if (res && res.ok && res.path) {
+            input.value = res.path;
+        } else if (res && res.ok && !res.path) {
+            // 用户取消，不做操作
+        } else if (res && res.error) {
+            showToast('无法打开文件夹选择框: ' + res.error, 'error');
+        }
+    } catch (e) {
+        // api() 内部已 toast
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+
+async function loadData() {
+    try {
+        const [projects, status] = await Promise.all([
+            api('/api/projects'),
+            api('/api/status'),
+        ]);
+        STATE.projects = projects || [];
+        STATE.status = status || {};
+    } catch (e) {
+        // 静默，用空数据
+    }
+    renderAll();
+}
+
+async function loadNodeVersions() {
+    try {
+        const versions = await api('/api/node-versions');
+        const select = document.getElementById('form-node-version');
+        // 保留第一个默认选项
+        select.innerHTML = '<option value="">不使用指定版本</option>';
+        (versions || []).forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v;
+            opt.textContent = 'v' + v;
+            select.appendChild(opt);
+        });
+    } catch (e) {
+        // 静默
+    }
+}
+
+async function loadRemoteData() {
+    try {
+        const [servers, projects, status] = await Promise.all([
+            api('/api/remote-servers'),
+            api('/api/remote-projects'),
+            api('/api/remote-status'),
+        ]);
+        STATE.remoteServers = servers || [];
+        STATE.remoteProjects = projects || [];
+        STATE.remoteStatus = status || {};
+    } catch (e) {}
+    renderRemoteAll();
+}
+
+async function loadFrameworks() {
+    try {
+        STATE.frameworks = await api('/api/frameworks') || [];
+    } catch (e) {
+        STATE.frameworks = [];
+    }
+    renderFrameworkList();
+    refreshFrameworkSelects();
+}
+
+function frameworkBadge(p) {
+    const fw = (STATE.frameworks || []).find(f => f.id === p.framework || f.name === p.framework);
+    if (!fw) return '<span class="fw-badge fw-none">未指定框架</span>';
+    const cls = 'fw-' + (fw.id || fw.name);
+    const icon = fw.icon ? fw.icon + ' ' : '';
+    return `<span class="fw-badge ${cls}">${icon}${esc(fw.display_name || fw.name)}</span>`;
+}
+
+function refreshFrameworkSelects() {
+    const localSel = document.getElementById('settings-framework');
+    if (localSel) {
+        const cur = localSel.value;
+        localSel.innerHTML = '<option value="">不指定（手动填命令）</option>';
+        (STATE.frameworks || []).forEach(f => {
+            const opt = document.createElement('option');
+            opt.value = f.id || f.name;
+            opt.textContent = (f.icon ? f.icon + ' ' : '') + (f.display_name || f.name);
+            localSel.appendChild(opt);
+        });
+        if (cur) localSel.value = cur;
+    }
+    const remoteSel = document.getElementById('rform-framework');
+    if (remoteSel) {
+        const cur = remoteSel.value;
+        remoteSel.innerHTML = '<option value="">不指定（手动填命令）</option>';
+        (STATE.frameworks || []).forEach(f => {
+            const opt = document.createElement('option');
+            opt.value = f.id || f.name;
+            opt.textContent = (f.icon ? f.icon + ' ' : '') + (f.display_name || f.name);
+            remoteSel.appendChild(opt);
+        });
+        if (cur) remoteSel.value = cur;
+    }
+}
+
+function renderFrameworkList() {
+    const container = document.getElementById('settings-framework-list');
+    if (!container) return;
+    if (!STATE.frameworks.length) {
+        container.innerHTML = '<div style="color:#94a3b8;font-size:12px;padding:8px 0;">暂无框架，点击下方按钮添加</div>';
+        return;
+    }
+    container.innerHTML = STATE.frameworks.map(f => `
+        <div class="project-list-item">
+            <div class="project-list-info">
+                <div class="project-list-name">
+                    ${(f.icon ? f.icon + ' ' : '') + esc(f.display_name || f.name)}
+                </div>
+                <div style="margin-top:4px;">
+                    <div class="fw-cmd-line"><span class="lbl">▶</span> ${esc(f.startCommand || '（未配置）')}</div>
+                    <div class="fw-cmd-line"><span class="lbl">🔨</span> ${esc(f.compileCommand || '（未配置）')}</div>
+                    <div class="fw-cmd-line"><span class="lbl">📦</span> ${esc(f.packageCommand || '（未配置）')}</div>
+                </div>
+            </div>
+            <div class="project-list-actions">
+                <button class="btn btn-outline btn-sm" onclick="showEditFrameworkForm('${f.id || f.name}')">✏️</button>
+                <button class="btn btn-outline btn-sm" style="color:var(--danger);" onclick="deleteFramework('${f.id || f.name}')">🗑</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function showAddFrameworkForm() {
+    document.getElementById('settings-framework-form-title').textContent = '新增框架';
+    document.getElementById('fw-edit-id').value = '';
+    document.getElementById('fw-name').value = '';
+    document.getElementById('fw-display-name').value = '';
+    document.getElementById('fw-icon').value = '🧩';
+    document.getElementById('fw-start').value = '';
+    document.getElementById('fw-compile').value = '';
+    document.getElementById('fw-package').value = '';
+    document.getElementById('fw-artifact').value = '';
+    document.getElementById('settings-framework-form').style.display = 'block';
+}
+
+function showEditFrameworkForm(id) {
+    const f = STATE.frameworks.find(x => x.id === id || x.name === id);
+    if (!f) return;
+    document.getElementById('settings-framework-form-title').textContent = '编辑框架: ' + (f.display_name || f.name);
+    document.getElementById('fw-edit-id').value = f.id || f.name;
+    document.getElementById('fw-name').value = f.name || '';
+    document.getElementById('fw-display-name').value = f.display_name || '';
+    document.getElementById('fw-icon').value = f.icon || '🧩';
+    document.getElementById('fw-start').value = f.startCommand || '';
+    document.getElementById('fw-compile').value = f.compileCommand || '';
+    document.getElementById('fw-package').value = f.packageCommand || '';
+    document.getElementById('fw-artifact').value = f.artifactPath || '';
+    document.getElementById('settings-framework-form').style.display = 'block';
+}
+
+function cancelFrameworkForm() {
+    document.getElementById('settings-framework-form').style.display = 'none';
+}
+
+async function saveFrameworkForm() {
+    const editId = document.getElementById('fw-edit-id').value;
+    const payload = {
+        name: document.getElementById('fw-name').value.trim(),
+        display_name: document.getElementById('fw-display-name').value.trim(),
+        icon: document.getElementById('fw-icon').value.trim() || '🧩',
+        startCommand: document.getElementById('fw-start').value.trim(),
+        compileCommand: document.getElementById('fw-compile').value.trim(),
+        packageCommand: document.getElementById('fw-package').value.trim(),
+        artifactPath: document.getElementById('fw-artifact').value.trim(),
+    };
+    if (!payload.name) { showToast('请输入框架名称', 'error'); return; }
+
+    try {
+        let res;
+        if (editId) {
+            res = await api(`/api/frameworks/${editId}`, { method: 'PUT', body: JSON.stringify(payload) });
+        } else {
+            res = await api('/api/frameworks', { method: 'POST', body: JSON.stringify(payload) });
+        }
+        if (!res.ok) { showToast(res.message || '保存失败', 'error'); return; }
+        showToast(editId ? '框架已更新' : '框架已添加', 'success');
+        cancelFrameworkForm();
+        await loadFrameworks();
+    } catch (e) {}
+}
+
+async function deleteFramework(id) {
+    if (!confirm(`确定要删除框架「${id}」吗？`)) return;
+    try {
+        const res = await api(`/api/frameworks/${id}`, { method: 'DELETE' });
+        if (!res.ok) { showToast(res.message || '删除失败', 'error'); return; }
+        showToast('框架已删除', 'success');
+        await loadFrameworks();
+    } catch (e) {}
+}
+
+async function remotePackageProject(id) {
+    const btn = document.getElementById(`rpackage-btn-${id}`);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span> 打包中...'; }
+    try {
+        const data = await api(`/api/remote-projects/${id}/package`, { method: 'POST' });
+        showToast(data.message, data.ok ? 'success' : 'error');
+        showRemoteLog(id);
+    } catch (e) {
+        if (btn) { btn.disabled = false; btn.innerHTML = '📦 打包'; }
+        return;
+    }
+    const pollTimer = setInterval(async () => {
+        try {
+            const res = await api(`/api/remote-projects/${id}/compiling`);
+            if (!res.compiling) {
+                clearInterval(pollTimer);
+                if (btn) { btn.disabled = false; btn.innerHTML = '📦 打包'; }
+                showToast('远程打包完成', 'success');
+            }
+        } catch (e) {
+            clearInterval(pollTimer);
+            if (btn) { btn.disabled = false; btn.innerHTML = '📦 打包'; }
+        }
+    }, 2000);
+}
+
+// ============================================================
+// Tab Switching
+// ============================================================
+function switchTab(tab) {
+    STATE.activeTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+
+    document.getElementById('local-section').style.display = tab === 'local' ? 'block' : 'none';
+    document.getElementById('remote-section').style.display = tab === 'remote' ? 'block' : 'none';
+
+    // 切换日志标签页
+    renderLogTabs();
+}
+
+// ============================================================
+// Render
+// ============================================================
+function renderAll() {
+    renderCards();
+    renderLogTabs();
+    updateGlobalButtons();
+    updateHeader();
+
+    if (STATE.currentLog && STATE.status[STATE.currentLog]) {
+        refreshLog();
+    }
+}
+
+function renderRemoteAll() {
+    renderRemoteCards();
+    renderLogTabs();
+    updateRemoteGlobalButtons();
+    updateHeader();
+}
+
+function renderRemoteCards() {
+    const grid = document.getElementById('remote-cards-grid');
+    const empty = document.getElementById('remote-empty-state');
+    const actions = document.getElementById('remote-global-actions');
+
+    if (!STATE.remoteProjects.length) {
+        grid.style.display = 'none';
+        actions.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+    }
+
+    empty.style.display = 'none';
+    grid.style.display = 'grid';
+    actions.style.display = 'flex';
+
+    grid.innerHTML = STATE.remoteProjects.map(p => {
+        const s = STATE.remoteStatus[p.id] || { status: 'stopped', port: p.port, name: p.name, serverName: '未知', serverHost: '' };
+        const badgeClass = { running: 'running', starting: 'starting', stopped: 'stopped', error: 'error' }[s.status] || 'stopped';
+        const badgeText = { running: '运行中', starting: '启动中...', stopped: '已停止', error: '异常' }[s.status] || s.status;
+        const isDisabled = !p.enabled ? ' style="opacity:0.55;"' : '';
+
+        return `
+        <div class="status-card" id="rcard-${p.id}" data-status="${s.status}"${isDisabled}>
+            <div class="card-header">
+                <div class="card-title">
+                    <div class="card-icon other">🖥️</div>
+                    ${esc(p.name)}
+                    ${!p.enabled ? '<span class="status-badge stopped">已禁用</span>' : ''}
+                    ${frameworkBadge(p)}
+                </div>
+                <span class="status-badge ${badgeClass}${s.status==='starting'?' starting-pulse':''}">${badgeText}</span>
+            </div>
+            <div class="card-info">
+                <span class="server-tag">🌐 ${esc(s.serverName)}</span>
+                <span class="tag">📍 端口: ${s.port || '--'}</span>
+                <span class="tag">📂 ${esc(p.path || '未配置')}</span>
+            </div>
+            <div class="card-actions">
+                <button class="btn btn-success btn-sm" onclick="remoteStartProject('${p.id}')"
+                    ${s.status==='running'||s.status==='starting'||!p.enabled ? 'disabled' : ''}>▶ 启动</button>
+                <button class="btn btn-danger btn-sm" onclick="remoteStopProject('${p.id}')"
+                    ${s.status==='stopped'||s.status==='error' ? 'disabled' : ''}>⏹ 停止</button>
+                <button class="btn btn-outline btn-sm" onclick="showRemoteLog('${p.id}')">📋 日志</button>
+                <button class="btn btn-sm" style="background:#8b5cf6;color:#fff;" onclick="remoteCompileProject('${p.id}')" id="rcompile-btn-${p.id}">🔨 编译</button>
+                <button class="btn btn-sm" style="background:#10b981;color:#fff;" onclick="remotePackageProject('${p.id}')" id="rpackage-btn-${p.id}">📦 打包</button>
+                ${s.port > 0 && s.serverHost ? `<button class="btn btn-sm btn-link ${s.status==='running'?'':'disabled'}"
+                    onclick="openRemoteSite('${s.serverHost}', ${s.port})" ${s.status==='running'?'':'disabled'}
+                    title="http://${s.serverHost}:${s.port}">🌐 打开</button>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function updateRemoteGlobalButtons() {
+    const anyRunning = Object.values(STATE.remoteStatus).some(s => s.status === 'running' || s.status === 'starting');
+    const anyEnabled = STATE.remoteProjects.some(p => p.enabled);
+    const startBtn = document.getElementById('btn-remote-start-all');
+    const stopBtn = document.getElementById('btn-remote-stop-all');
+    if (startBtn) startBtn.disabled = !anyEnabled || Object.values(STATE.remoteStatus).every(s => s.status === 'running');
+    if (stopBtn) stopBtn.disabled = !anyRunning;
+}
+
+function renderCards() {
+    const grid = document.getElementById('cards-grid');
+    const empty = document.getElementById('empty-state');
+    const actions = document.getElementById('global-actions');
+
+    if (!STATE.projects.length) {
+        grid.style.display = 'none';
+        actions.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+    }
+
+    empty.style.display = 'none';
+    grid.style.display = 'grid';
+    actions.style.display = 'flex';
+
+    grid.innerHTML = STATE.projects.map(p => {
+        const s = STATE.status[p.id] || { status: 'stopped', pid: null, port: p.port, name: p.name };
+        const badgeClass = { running: 'running', starting: 'starting', stopped: 'stopped', error: 'error' }[s.status] || 'stopped';
+        const badgeText = { running: '运行中', starting: '启动中...', stopped: '已停止', error: '异常' }[s.status] || s.status;
+        const iconClass = p.command && p.command.includes('npm') ? 'node' :
+                          (p.command && p.command.includes('mvn') || p.command.includes('java')) ? 'java' : 'other';
+        const iconEmoji = iconClass === 'node' ? '⚛️' : iconClass === 'java' ? '☕' : '📦';
+        const isDisabled = !p.enabled ? ' style="opacity:0.55;"' : '';
+
+        return `
+        <div class="status-card" id="card-${p.id}" data-status="${s.status}"${isDisabled}>
+            <div class="card-header">
+                <div class="card-title">
+                    <div class="card-icon ${iconClass}">${iconEmoji}</div>
+                    ${esc(p.name)}
+                    ${!p.enabled ? '<span class="status-badge stopped">已禁用</span>' : ''}
+                    ${frameworkBadge(p)}
+                </div>
+                <span class="status-badge ${badgeClass}${s.status==='starting'?' starting-pulse':''}">${badgeText}</span>
+            </div>
+            <div class="card-info">
+                <span class="tag">📍 端口: ${s.port || '--'}</span>
+                <span class="tag">🔢 PID: ${s.pid || '--'}</span>
+                ${p.nodeVersion ? `<span class="tag" style="background:#ede9fe;color:#7c3aed;">⚡ Node ${esc(p.nodeVersion)}</span>` : ''}
+                <span class="tag">📂 ${esc(p.path || '未配置')}</span>
+            </div>
+            <div class="card-actions">
+                <button class="btn btn-success btn-sm" onclick="startProject('${p.id}')"
+                    ${s.status==='running'||s.status==='starting'||!p.enabled ? 'disabled' : ''}>▶ 启动</button>
+                <button class="btn btn-danger btn-sm" onclick="stopProject('${p.id}')"
+                    ${s.status==='stopped'||s.status==='error' ? 'disabled' : ''}>⏹ 停止</button>
+                <button class="btn btn-outline btn-sm" onclick="showLog('${p.id}')">📋 日志</button>
+                <button class="btn btn-sm" style="background:#8b5cf6;color:#fff;" onclick="compileProject('${p.id}')" id="compile-btn-${p.id}">🔨 编译</button>
+                <button class="btn btn-sm" style="background:#0ea5e9;color:#fff;" onclick="pullProject('${p.id}')" id="pull-btn-${p.id}">⬇ 拉取</button>
+                <button class="btn btn-sm" style="background:#f59e0b;color:#fff;" onclick="commitProject('${p.id}')" id="commit-btn-${p.id}">⬆ 提交</button>
+                <button class="btn btn-sm" style="background:#10b981;color:#fff;" onclick="packageProject('${p.id}')" id="package-btn-${p.id}">📦 打包</button>
+                ${s.port > 0 ? `<button class="btn btn-sm btn-link ${s.status==='running'?'':'disabled'}"
+                    onclick="openProjectSite('${s.port}')" ${s.status==='running'?'':'disabled'}
+                    title="在浏览器中打开 http://localhost:${s.port}">🌐 打开</button>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderLogTabs() {
+    const tabs = document.getElementById('log-tabs');
+    const isRemote = STATE.activeTab === 'remote';
+    const projects = isRemote ? STATE.remoteProjects : STATE.projects;
+
+    if (!projects.length) {
+        tabs.innerHTML = '<span class="log-tab" style="padding:9px 16px; color:#94a3b8;">请先添加项目</span>';
+        return;
+    }
+
+    tabs.innerHTML = projects.map(p => `
+        <button class="log-tab" data-log="${p.id}" data-log-type="${isRemote ? 'remote' : 'local'}" onclick="${isRemote ? `showRemoteLog('${p.id}')` : `showLog('${p.id}')`}">
+            ${esc(p.name)}
+        </button>
+    `).join('');
+
+    // 保持当前选中状态
+    if (STATE.currentLog) {
+        document.querySelectorAll('.log-tab').forEach(t => {
+            t.classList.toggle('active', t.dataset.log === STATE.currentLog);
+        });
+    }
+}
+
+function updateHeader() {
+    const localCount = STATE.projects.length;
+    const remoteCount = STATE.remoteProjects.length;
+    document.getElementById('project-count').textContent = (localCount + remoteCount) + ' 个项目';
+    document.getElementById('local-count').textContent = localCount;
+    document.getElementById('remote-count').textContent = remoteCount;
+}
+
+function updateGlobalButtons() {
+    const anyRunning = Object.values(STATE.status).some(s => s.status === 'running' || s.status === 'starting');
+    const anyEnabled = STATE.projects.some(p => p.enabled);
+    document.getElementById('btn-start-all').disabled = !anyEnabled || Object.values(STATE.status).every(s => s.status === 'running');
+    document.getElementById('btn-stop-all').disabled = !anyRunning;
+}
+
+// ============================================================
+// Actions
+// ============================================================
+function openProjectSite(port) {
+    window.open(`http://localhost:${port}`, '_blank');
+}
+
+async function startProject(id) {
+    const btn = document.querySelector(`#card-${id} .btn-success`);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span>'; }
+
+    try {
+        const data = await api(`/api/projects/${id}/start`, { method: 'POST' });
+        showToast(data.message, data.ok ? 'success' : 'error');
+        showLog(id);
+    } catch (e) {}
+    setTimeout(pollStatus, 600);
+}
+
+async function stopProject(id) {
+    const btn = document.querySelector(`#card-${id} .btn-danger`);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span>'; }
+
+    try {
+        const data = await api(`/api/projects/${id}/stop`, { method: 'POST' });
+        showToast(data.message, data.ok ? 'success' : 'error');
+    } catch (e) {}
+    setTimeout(pollStatus, 800);
+}
+
+async function compileProject(id) {
+    const btn = document.getElementById(`compile-btn-${id}`);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span> 编译中...'; }
+
+    try {
+        const data = await api(`/api/projects/${id}/compile`, { method: 'POST' });
+        showToast(data.message, data.ok ? 'success' : 'error');
+        // 立即切换到日志视图查看编译进度
+        showLog(id);
+    } catch (e) {
+        if (btn) { btn.disabled = false; btn.innerHTML = '🔨 编译'; }
+        return;
+    }
+
+    // 轮询编译状态，完成后恢复按钮
+    const pollTimer = setInterval(async () => {
+        try {
+            const res = await api(`/api/projects/${id}/compiling`);
+            if (!res.compiling) {
+                clearInterval(pollTimer);
+                if (btn) { btn.disabled = false; btn.innerHTML = '🔨 编译'; }
+                refreshLog();
+                showToast('编译完成', 'success');
+            }
+        } catch (e) {
+            clearInterval(pollTimer);
+            if (btn) { btn.disabled = false; btn.innerHTML = '🔨 编译'; }
+        }
+    }, 2000);
+}
+
+// 通用 VCS 操作（拉取 / 提交 / 打包）
+// opts: { btnId, label, busyText, doneText, fetchOpts }
+async function runVcsOp(id, op, opts) {
+    const btn = document.getElementById(opts.btnId);
+    if (btn) { btn.disabled = true; btn.innerHTML = `<span class="loading-spinner"></span> ${opts.busyText}`; }
+
+    try {
+        const data = await api(`/api/projects/${id}/${op}`, Object.assign({ method: 'POST' }, opts.fetchOpts || {}));
+        showToast(data.message, data.ok ? 'success' : 'error');
+        if (!data.ok) {
+            if (btn) { btn.disabled = false; btn.innerHTML = opts.label; }
+            return;
+        }
+        // 立即切到日志视图查看进度
+        showLog(id);
+    } catch (e) {
+        if (btn) { btn.disabled = false; btn.innerHTML = opts.label; }
+        return;
+    }
+
+    // 轮询操作状态，期间实时刷新日志
+    const pollTimer = setInterval(async () => {
+        try {
+            const res = await api(`/api/projects/${id}/vcs-status`);
+            refreshLog();
+            if (!res.busy) {
+                clearInterval(pollTimer);
+                if (btn) { btn.disabled = false; btn.innerHTML = opts.label; }
+                showToast(`${opts.doneText}完成`, 'success');
+            }
+        } catch (e) {
+            clearInterval(pollTimer);
+            if (btn) { btn.disabled = false; btn.innerHTML = opts.label; }
+        }
+    }, 2000);
+}
+
+async function pullProject(id) {
+    await runVcsOp(id, 'pull', {
+        btnId: `pull-btn-${id}`,
+        label: '⬇ 拉取',
+        busyText: '拉取中...',
+        doneText: '拉取',
+    });
+}
+
+let pendingCommitId = null;
+
+async function commitProject(id) {
+    pendingCommitId = id;
+    const ta = document.getElementById('commit-message');
+    ta.value = '';
+    document.getElementById('commit-dialog').classList.add('open');
+    setTimeout(() => ta.focus(), 50);
+}
+
+function closeCommitDialog() {
+    document.getElementById('commit-dialog').classList.remove('open');
+    pendingCommitId = null;
+}
+
+async function confirmCommit() {
+    const id = pendingCommitId;
+    if (!id) return;
+    const msg = document.getElementById('commit-message').value.trim();
+    closeCommitDialog();
+    await runVcsOp(id, 'commit', {
+        btnId: `commit-btn-${id}`,
+        label: '⬆ 提交',
+        busyText: '提交中...',
+        doneText: '提交',
+        fetchOpts: {
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msg }),
+        },
+    });
+}
+
+async function packageProject(id) {
+    await runVcsOp(id, 'package', {
+        btnId: `package-btn-${id}`,
+        label: '📦 打包',
+        busyText: '打包中...',
+        doneText: '打包',
+    });
+}
+
+async function startAll() {
+    const btn = document.getElementById('btn-start-all');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> 逐个启动中...';
+
+    try {
+        const data = await api('/api/start-all', { method: 'POST' });
+        showToast(data.message, data.ok ? 'success' : 'error');
+        if (data.started && data.started.length && STATE.projects.length) {
+            showLog(STATE.projects[0].id);
+        }
+    } catch (e) {}
+    setTimeout(pollStatus, 500);
+}
+
+async function stopAll() {
+    const btn = document.getElementById('btn-stop-all');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span>';
+
+    try {
+        await api('/api/stop-all', { method: 'POST' });
+        showToast('所有项目已停止', 'success');
+    } catch (e) {}
+    setTimeout(pollStatus, 800);
+}
+
+// ============================================================
+// Status Polling
+// ============================================================
+function startPolling() {
+    if (STATE.pollingTimer) clearInterval(STATE.pollingTimer);
+    STATE.pollingTimer = setInterval(pollStatus, 2500);
+}
+
+async function pollStatus() {
+    try {
+        const [localStatus, remoteStatus] = await Promise.all([
+            api('/api/status'),
+            api('/api/remote-status'),
+        ]);
+        STATE.status = localStatus;
+        STATE.remoteStatus = remoteStatus;
+        renderCards();
+        renderRemoteCards();
+        renderLogTabs();
+        updateGlobalButtons();
+        updateRemoteGlobalButtons();
+    } catch (e) {}
+}
+
+// ============================================================
+// Log
+// ============================================================
+function showLog(id) {
+    STATE.currentLog = id;
+    STATE.currentLogType = 'local';
+    document.querySelectorAll('.log-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.log === id);
+    });
+    refreshLog();
+}
+
+function showRemoteLog(id) {
+    STATE.currentLog = id;
+    STATE.currentLogType = 'remote';
+    document.querySelectorAll('.log-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.log === id);
+    });
+    refreshLog();
+}
+
+async function refreshLog() {
+    if (!STATE.currentLog) return;
+    const el = document.getElementById('log-content');
+    const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 30;
+    try {
+        let data;
+        if (STATE.currentLogType === 'remote') {
+            data = await api(`/api/remote-projects/${STATE.currentLog}/logs?lines=400`);
+        } else {
+            data = await api(`/api/projects/${STATE.currentLog}/logs?lines=400`);
+        }
+        if (data.content && data.content.trim()) {
+            el.textContent = data.content;
+            el.classList.remove('empty');
+        } else {
+            el.textContent = '暂无日志输出...';
+            el.classList.add('empty');
+        }
+        if (isAtBottom) {
+            el.scrollTop = el.scrollHeight;
+        }
+    } catch (e) {
+        el.textContent = '加载日志失败';
+        el.classList.add('empty');
+    }
+}
+
+function clearLogDisplay() {
+    document.getElementById('log-content').textContent = '暂无日志输出...';
+    document.getElementById('log-content').classList.add('empty');
+}
+
+// Auto-refresh log when services are running
+setInterval(() => {
+    const anyRunning = Object.values(STATE.status).some(s => s.status === 'running' || s.status === 'starting')
+        || Object.values(STATE.remoteStatus).some(s => s.status === 'running' || s.status === 'starting');
+    if (anyRunning) refreshLog();
+}, 3000);
+
+// ============================================================
+// Settings
+// ============================================================
+function openSettings() {
+    document.getElementById('settings-overlay').classList.add('open');
+    document.getElementById('settings-form').style.display = 'none';
+    document.getElementById('settings-server-form').style.display = 'none';
+    document.getElementById('settings-remote-form').style.display = 'none';
+    document.getElementById('settings-framework-form').style.display = 'none';
+    renderProjectList();
+    renderServerList();
+    renderRemoteProjectList();
+}
+
+function closeSettings() {
+    document.getElementById('settings-overlay').classList.remove('open');
+    cancelForm();
+}
+
+function renderProjectList() {
+    const container = document.getElementById('settings-project-list');
+    if (!STATE.projects.length) {
+        container.innerHTML = '<div style="color:#94a3b8;font-size:12px;padding:8px 0;">暂无项目，点击下方按钮添加</div>';
+        return;
+    }
+
+    container.innerHTML = STATE.projects.map((p, i) => `
+        <div class="project-list-item ${!p.enabled ? 'disabled' : ''}">
+            <div class="project-list-order">#${p.startOrder || (i+1)}</div>
+            <div class="project-list-info">
+                <div class="project-list-name">
+                    ${esc(p.name)}
+                    ${!p.enabled ? ' <span style="color:var(--text-secondary);font-size:11px;">(已禁用)</span>' : ''}
+                </div>
+                <div class="project-list-meta">
+                    ID: ${esc(p.id)} | 命令: ${esc(p.command || '未配置')} | 端口: ${p.port || '--'}${p.nodeVersion ? ` | Node: ${esc(p.nodeVersion)}` : ''}${p.framework ? ` | 框架: ${esc(p.framework)}` : ''}
+                </div>
+            </div>
+            <div class="project-list-actions">
+                <button class="btn btn-outline btn-sm" onclick="showEditForm('${p.id}')">✏️</button>
+                <button class="btn btn-outline btn-sm" style="color:var(--danger);" onclick="deleteProject('${p.id}')">🗑</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function showAddForm() {
+    document.getElementById('settings-form-title').textContent = '新增项目';
+    document.getElementById('form-edit-id').value = '';
+    document.getElementById('form-name').value = '';
+    document.getElementById('form-id').value = '';
+    document.getElementById('form-path').value = '';
+    document.getElementById('form-command').value = '';
+    document.getElementById('form-pre-command').value = '';
+    document.getElementById('form-node-version').value = '';
+    document.getElementById('form-compile-command').value = '';
+    document.getElementById('form-artifact-path').value = '';
+    document.getElementById('form-package-target').value = '';
+    document.getElementById('form-port').value = '';
+    document.getElementById('form-order').value = (STATE.projects.length + 1) || 1;
+    document.getElementById('form-enabled').checked = true;
+    document.getElementById('settings-framework').value = '';
+    document.getElementById('settings-form').style.display = 'block';
+}
+
+function showEditForm(id) {
+    const p = STATE.projects.find(x => x.id === id);
+    if (!p) return;
+
+    document.getElementById('settings-form-title').textContent = '编辑项目: ' + p.name;
+    document.getElementById('form-edit-id').value = p.id;
+    document.getElementById('form-name').value = p.name;
+    document.getElementById('form-id').value = p.id;
+    document.getElementById('form-path').value = p.path || '';
+    document.getElementById('form-command').value = p.command || '';
+    document.getElementById('form-pre-command').value = p.preCommand || '';
+    document.getElementById('form-node-version').value = p.nodeVersion || '';
+    document.getElementById('form-compile-command').value = p.compileCommand || '';
+    document.getElementById('form-artifact-path').value = p.artifactPath || '';
+    document.getElementById('form-package-target').value = p.packageTargetDir || '';
+    document.getElementById('settings-framework').value = p.framework || '';
+    document.getElementById('form-port').value = p.port || '';
+    document.getElementById('form-order').value = p.startOrder || '';
+    document.getElementById('form-enabled').checked = p.enabled !== false;
+    document.getElementById('settings-form').style.display = 'block';
+}
+
+function cancelForm() {
+    document.getElementById('settings-form').style.display = 'none';
+}
+
+async function saveForm() {
+    const editId = document.getElementById('form-edit-id').value;
+    const data = {
+        name: document.getElementById('form-name').value.trim(),
+        id: document.getElementById('form-id').value.trim(),
+        path: document.getElementById('form-path').value.trim(),
+        command: document.getElementById('form-command').value.trim(),
+        preCommand: document.getElementById('form-pre-command').value.trim(),
+        nodeVersion: document.getElementById('form-node-version').value.trim(),
+        compileCommand: document.getElementById('form-compile-command').value.trim(),
+        packageCommand: document.getElementById('form-package-command').value.trim(),
+        framework: document.getElementById('settings-framework').value,
+        artifactPath: document.getElementById('form-artifact-path').value.trim(),
+        packageTargetDir: document.getElementById('form-package-target').value.trim(),
+        port: parseInt(document.getElementById('form-port').value) || 0,
+        startOrder: parseInt(document.getElementById('form-order').value) || 0,
+        enabled: document.getElementById('form-enabled').checked,
+    };
+
+    if (!data.name) { showToast('请输入项目名称', 'error'); return; }
+
+    try {
+        if (editId) {
+            const res = await api(`/api/projects/${editId}`, {
+                method: 'PUT',
+                body: JSON.stringify(data),
+            });
+            if (!res.ok) return;
+            // 如果 ID 变了，更新日志引用
+            if (res.project && res.project.id !== editId && STATE.currentLog === editId) {
+                STATE.currentLog = res.project.id;
+            }
+        } else {
+            const res = await api('/api/projects', {
+                method: 'POST',
+                body: JSON.stringify(data),
+            });
+            if (!res.ok) return;
+        }
+        showToast(editId ? '项目已更新' : '项目已添加', 'success');
+        cancelForm();
+        await loadData();
+        renderProjectList();
+    } catch (e) {}
+}
+
+async function deleteProject(id) {
+    if (!confirm(`确定要删除项目「${id}」吗？\n\n如果该项目正在运行，将先被停止。`)) return;
+
+    try {
+        await api(`/api/projects/${id}`, { method: 'DELETE' });
+        showToast('项目已删除', 'success');
+        if (STATE.currentLog === id) STATE.currentLog = null;
+        await loadData();
+        renderProjectList();
+    } catch (e) {}
+}
+
+// ============================================================
+// Remote Project Actions
+// ============================================================
+function openRemoteSite(host, port) {
+    window.open(`http://${host}:${port}`, '_blank');
+}
+
+async function remoteStartProject(id) {
+    const btn = document.querySelector(`#rcard-${id} .btn-success`);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span>'; }
+
+    try {
+        const data = await api(`/api/remote-projects/${id}/start`, { method: 'POST' });
+        showToast(data.message, data.ok ? 'success' : 'error');
+        showRemoteLog(id);
+    } catch (e) {}
+    setTimeout(pollStatus, 600);
+}
+
+async function remoteStopProject(id) {
+    const btn = document.querySelector(`#rcard-${id} .btn-danger`);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span>'; }
+
+    try {
+        const data = await api(`/api/remote-projects/${id}/stop`, { method: 'POST' });
+        showToast(data.message, data.ok ? 'success' : 'error');
+    } catch (e) {}
+    setTimeout(pollStatus, 800);
+}
+
+async function remoteCompileProject(id) {
+    const btn = document.getElementById(`rcompile-btn-${id}`);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span> 编译中...'; }
+
+    try {
+        const data = await api(`/api/remote-projects/${id}/compile`, { method: 'POST' });
+        showToast(data.message, data.ok ? 'success' : 'error');
+        showRemoteLog(id);
+    } catch (e) {
+        if (btn) { btn.disabled = false; btn.innerHTML = '🔨 编译'; }
+        return;
+    }
+
+    const pollTimer = setInterval(async () => {
+        try {
+            const res = await api(`/api/remote-projects/${id}/compiling`);
+            if (!res.compiling) {
+                clearInterval(pollTimer);
+                if (btn) { btn.disabled = false; btn.innerHTML = '🔨 编译'; }
+                refreshLog();
+                showToast('编译完成', 'success');
+            }
+        } catch (e) {
+            clearInterval(pollTimer);
+            if (btn) { btn.disabled = false; btn.innerHTML = '🔨 编译'; }
+        }
+    }, 3000);
+}
+
+async function remoteStartAll() {
+    const btn = document.getElementById('btn-remote-start-all');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> 逐个启动中...';
+
+    try {
+        const data = await api('/api/remote-start-all', { method: 'POST' });
+        showToast(data.message, data.ok ? 'success' : 'error');
+        if (data.started && data.started.length && STATE.remoteProjects.length) {
+            showRemoteLog(STATE.remoteProjects[0].id);
+        }
+    } catch (e) {}
+    setTimeout(pollStatus, 500);
+}
+
+async function remoteStopAll() {
+    const btn = document.getElementById('btn-remote-stop-all');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span>';
+
+    try {
+        await api('/api/remote-stop-all', { method: 'POST' });
+        showToast('所有远程项目已停止', 'success');
+    } catch (e) {}
+    setTimeout(pollStatus, 800);
+}
+
+async function deleteRemoteProject(id) {
+    if (!confirm(`确定要删除远程项目「${id}」吗？`)) return;
+
+    try {
+        await api(`/api/remote-projects/${id}`, { method: 'DELETE' });
+        showToast('远程项目已删除', 'success');
+        if (STATE.currentLog === id) STATE.currentLog = null;
+        await loadRemoteData();
+        renderRemoteProjectList();
+    } catch (e) {}
+}
+
+// ============================================================
+// Remote Server Settings
+// ============================================================
+function renderServerList() {
+    const container = document.getElementById('settings-server-list');
+    if (!STATE.remoteServers.length) {
+        container.innerHTML = '<div style="color:#94a3b8;font-size:12px;padding:8px 0;">暂无服务器，点击下方按钮添加</div>';
+        return;
+    }
+
+    container.innerHTML = STATE.remoteServers.map(s => `
+        <div class="project-list-item">
+            <div class="project-list-info">
+                <div class="project-list-name">${esc(s.name)}</div>
+                <div class="project-list-meta">
+                    ${esc(s.username)}@${esc(s.host)}:${s.port}
+                </div>
+            </div>
+            <div class="project-list-actions">
+                <button class="btn btn-outline btn-sm" onclick="showEditServerForm('${s.id}')">✏️</button>
+                <button class="btn btn-outline btn-sm" style="color:var(--danger);" onclick="deleteServer('${s.id}')">🗑</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function showAddServerForm() {
+    document.getElementById('settings-server-form-title').textContent = '新增服务器';
+    document.getElementById('server-form-edit-id').value = '';
+    document.getElementById('server-form-name').value = '';
+    document.getElementById('server-form-host').value = '';
+    document.getElementById('server-form-port').value = '22';
+    document.getElementById('server-form-username').value = 'root';
+    document.getElementById('server-form-password').value = '';
+    document.getElementById('server-test-btn').style.display = 'none';
+    document.getElementById('settings-server-form').style.display = 'block';
+}
+
+function showEditServerForm(id) {
+    const s = STATE.remoteServers.find(x => x.id === id);
+    if (!s) return;
+
+    document.getElementById('settings-server-form-title').textContent = '编辑服务器: ' + s.name;
+    document.getElementById('server-form-edit-id').value = s.id;
+    document.getElementById('server-form-name').value = s.name;
+    document.getElementById('server-form-host').value = s.host;
+    document.getElementById('server-form-port').value = s.port;
+    document.getElementById('server-form-username').value = s.username;
+    document.getElementById('server-form-password').value = s.password || '';
+    document.getElementById('server-test-btn').style.display = 'inline-flex';
+    document.getElementById('settings-server-form').style.display = 'block';
+}
+
+function cancelServerForm() {
+    document.getElementById('settings-server-form').style.display = 'none';
+}
+
+async function saveServerForm() {
+    const editId = document.getElementById('server-form-edit-id').value;
+    const data = {
+        name: document.getElementById('server-form-name').value.trim(),
+        host: document.getElementById('server-form-host').value.trim(),
+        port: parseInt(document.getElementById('server-form-port').value) || 22,
+        username: document.getElementById('server-form-username').value.trim(),
+        password: document.getElementById('server-form-password').value,
+    };
+
+    if (!data.name) { showToast('请输入服务器名称', 'error'); return; }
+    if (!data.host) { showToast('请输入主机地址', 'error'); return; }
+
+    try {
+        if (editId) {
+            const res = await api(`/api/remote-servers/${editId}`, { method: 'PUT', body: JSON.stringify(data) });
+            if (!res.ok) return;
+        } else {
+            const res = await api('/api/remote-servers', { method: 'POST', body: JSON.stringify(data) });
+            if (!res.ok) return;
+        }
+        showToast(editId ? '服务器已更新' : '服务器已添加', 'success');
+        cancelServerForm();
+        await loadRemoteData();
+        renderServerList();
+    } catch (e) {}
+}
+
+async function deleteServer(id) {
+    if (!confirm('确定要删除该服务器吗？\n\n关联的远程项目也会被删除。')) return;
+
+    try {
+        await api(`/api/remote-servers/${id}`, { method: 'DELETE' });
+        showToast('服务器已删除', 'success');
+        await loadRemoteData();
+        renderServerList();
+        renderRemoteProjectList();
+    } catch (e) {}
+}
+
+async function testServerConnection() {
+    const editId = document.getElementById('server-form-edit-id').value;
+    if (!editId) { showToast('请先保存服务器后再测试连接', 'error'); return; }
+
+    const btn = document.getElementById('server-test-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> 连接中...';
+
+    try {
+        const res = await api(`/api/remote-servers/${editId}/test`, { method: 'POST' });
+        showToast(res.message, res.ok ? 'success' : 'error');
+    } catch (e) {}
+    btn.disabled = false;
+    btn.innerHTML = '🔌 测试连接';
+}
+
+// ============================================================
+// Remote Project Settings
+// ============================================================
+function renderRemoteProjectList() {
+    const container = document.getElementById('settings-remote-project-list');
+    if (!STATE.remoteProjects.length) {
+        container.innerHTML = '<div style="color:#94a3b8;font-size:12px;padding:8px 0;">暂无远程项目，点击下方按钮添加</div>';
+        return;
+    }
+
+    container.innerHTML = STATE.remoteProjects.map((p, i) => {
+        const server = STATE.remoteServers.find(s => s.id === p.serverId);
+        const serverName = server ? server.name : '未知服务器';
+        return `
+        <div class="project-list-item ${!p.enabled ? 'disabled' : ''}">
+            <div class="project-list-order">#${p.startOrder || (i+1)}</div>
+            <div class="project-list-info">
+                <div class="project-list-name">
+                    ${esc(p.name)}
+                    ${!p.enabled ? ' <span style="color:var(--text-secondary);font-size:11px;">(已禁用)</span>' : ''}
+                </div>
+                <div class="project-list-meta">
+                    服务器: ${esc(serverName)} | 路径: ${esc(p.path || '未配置')} | 命令: ${esc(p.command || '未配置')} | 端口: ${p.port || '--'}${p.framework ? ` | 框架: ${esc(p.framework)}` : ''}
+                </div>
+            </div>
+            <div class="project-list-actions">
+                <button class="btn btn-outline btn-sm" onclick="showEditRemoteForm('${p.id}')">✏️</button>
+                <button class="btn btn-outline btn-sm" style="color:var(--danger);" onclick="deleteRemoteProject('${p.id}')">🗑</button>
+            </div>
+        </div>
+    `;
+    }).join('');
+}
+
+function populateServerSelect() {
+    const select = document.getElementById('rform-server');
+    select.innerHTML = '<option value="">请选择服务器</option>';
+    STATE.remoteServers.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = `${s.name} (${s.host})`;
+        select.appendChild(opt);
+    });
+}
+
+function showAddRemoteForm() {
+    populateServerSelect();
+    document.getElementById('settings-remote-form-title').textContent = '新增远程项目';
+    document.getElementById('rform-edit-id').value = '';
+    document.getElementById('rform-name').value = '';
+    document.getElementById('rform-id').value = '';
+    document.getElementById('rform-server').value = '';
+    document.getElementById('rform-path').value = '';
+    document.getElementById('rform-command').value = '';
+    document.getElementById('rform-compile-command').value = '';
+    document.getElementById('rform-port').value = '';
+    document.getElementById('rform-order').value = (STATE.remoteProjects.length + 1) || 1;
+    document.getElementById('rform-enabled').checked = true;
+    document.getElementById('rform-framework').value = '';
+    document.getElementById('settings-remote-form').style.display = 'block';
+}
+
+function showEditRemoteForm(id) {
+    populateServerSelect();
+    const p = STATE.remoteProjects.find(x => x.id === id);
+    if (!p) return;
+
+    document.getElementById('settings-remote-form-title').textContent = '编辑远程项目: ' + p.name;
+    document.getElementById('rform-edit-id').value = p.id;
+    document.getElementById('rform-name').value = p.name;
+    document.getElementById('rform-id').value = p.id;
+    document.getElementById('rform-server').value = p.serverId || '';
+    document.getElementById('rform-path').value = p.path || '';
+    document.getElementById('rform-command').value = p.command || '';
+    document.getElementById('rform-compile-command').value = p.compileCommand || '';
+    document.getElementById('rform-framework').value = p.framework || '';
+    document.getElementById('rform-port').value = p.port || '';
+    document.getElementById('rform-order').value = p.startOrder || '';
+    document.getElementById('rform-enabled').checked = p.enabled !== false;
+    document.getElementById('settings-remote-form').style.display = 'block';
+}
+
+function cancelRemoteForm() {
+    document.getElementById('settings-remote-form').style.display = 'none';
+}
+
+async function saveRemoteForm() {
+    const editId = document.getElementById('rform-edit-id').value;
+    const data = {
+        name: document.getElementById('rform-name').value.trim(),
+        id: document.getElementById('rform-id').value.trim(),
+        serverId: document.getElementById('rform-server').value,
+        path: document.getElementById('rform-path').value.trim(),
+        command: document.getElementById('rform-command').value.trim(),
+        compileCommand: document.getElementById('rform-compile-command').value.trim(),
+        packageCommand: document.getElementById('rform-package-command').value.trim(),
+        framework: document.getElementById('rform-framework').value,
+        artifactPath: document.getElementById('rform-artifact-path').value.trim(),
+        packageTargetDir: document.getElementById('rform-package-target').value.trim(),
+        port: parseInt(document.getElementById('rform-port').value) || 0,
+        startOrder: parseInt(document.getElementById('rform-order').value) || 0,
+        enabled: document.getElementById('rform-enabled').checked,
+    };
+
+    if (!data.name) { showToast('请输入项目名称', 'error'); return; }
+    if (!data.serverId) { showToast('请选择所属服务器', 'error'); return; }
+
+    try {
+        if (editId) {
+            const res = await api(`/api/remote-projects/${editId}`, { method: 'PUT', body: JSON.stringify(data) });
+            if (!res.ok) return;
+        } else {
+            const res = await api('/api/remote-projects', { method: 'POST', body: JSON.stringify(data) });
+            if (!res.ok) return;
+        }
+        showToast(editId ? '远程项目已更新' : '远程项目已添加', 'success');
+        cancelRemoteForm();
+        await loadRemoteData();
+        renderRemoteProjectList();
+    } catch (e) {}
+}
+
+// ============================================================
+// Overlay click-to-close
+// ============================================================
+document.getElementById('settings-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeSettings();
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeSettings();
+});
+
+// ============================================================
+// Toast
+// ============================================================
+let toastTimer = null;
+function showToast(msg, type = '') {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.className = 'toast ' + type + ' show';
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// ============================================================
+// Helpers
+// ============================================================
+function esc(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// ============================================================
+// Boot
+// ============================================================
+init();
+</script>
+</body>
+</html>
